@@ -28,9 +28,64 @@ the fuller production-shaped path — come back to it once this works.
 
 ---
 
+## Navigating the console
+
+Two ways to get anywhere:
+
+- **Search bar at the top of every page.** Type `EC2`, `Budgets`, `Elastic IP`.
+  Fastest general method.
+- **Direct links** below. These pin `ap-southeast-1`, so they can't land you in
+  the wrong region.
+
+| Where | Link |
+|---|---|
+| Budgets (billing is global, lives in us-east-1) | https://us-east-1.console.aws.amazon.com/costmanagement/home#/budgets |
+| Launch an instance | https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#LaunchInstances: |
+| Your instances | https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#Instances: |
+| Elastic IPs | https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#Addresses: |
+| Security groups | https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#SecurityGroups: |
+
+Inside EC2, the **left sidebar** is the main map:
+
+```
+Instances
+  └─ Instances          ← your servers, start/stop, find the public IP
+Network & Security
+  ├─ Security Groups    ← firewall rules
+  ├─ Elastic IPs        ← static IP addresses
+  └─ Key Pairs          ← the .pem you SSH with
+```
+
+> AWS moves labels and buttons around. If something below doesn't match what
+> you see, the *sequence* is still right — look for the nearest equivalent
+> wording rather than assuming you're on the wrong screen.
+
+---
+
 ## Phase 1 — Launch the instance
 
 EC2 → Instances → **Launch instances**
+
+The wizard is one long form. Panels, top to bottom:
+
+1. **Name and tags** — `test-api`
+2. **Application and OS Images** — Quick Start → **Ubuntu** tile → the dropdown
+   should read *Ubuntu Server 24.04 LTS (HVM), SSD Volume Type*, marked
+   "Free tier eligible"
+3. **Instance type** — `t3.micro`
+4. **Key pair (login)** — click **Create new key pair** → name `test-api-key`,
+   type RSA, format **.pem** → Create. It downloads immediately.
+5. **Network settings** — click **Edit** (top-right of that panel) and set the
+   inbound rules per the table below
+6. **Configure storage** — 20 GiB, gp3
+7. **Summary** panel on the right → **Launch instance**
+
+After launching you get a green success banner → **View all instances**. Wait
+until *Instance state* is `Running` **and** *Status checks* shows `2/2 passed`.
+That takes a couple of minutes; SSH will refuse connections before it finishes.
+
+Find your address on the instance's **Details** tab, field
+**Public IPv4 address**.
 
 | Field | Value |
 |---|---|
@@ -57,10 +112,20 @@ Then click **Launch instance**.
 
 ### Give it a static IP
 
-EC2 → **Elastic IPs** → Allocate Elastic IP address → Allocate.
-Select it → Actions → **Associate** → choose your `test-api` instance.
+Left sidebar → **Network & Security → Elastic IPs**
 
-Without this, the public IP changes every time the instance stops.
+1. Orange **Allocate Elastic IP address** button (top right) → leave defaults →
+   **Allocate**
+2. Tick the new address in the list → **Actions** dropdown → **Associate
+   Elastic IP address**
+3. Resource type **Instance** → choose `test-api` → **Associate**
+
+The instance's Public IPv4 address now changes to this one — use it from here
+on. Without this step the IP changes every time the instance stops.
+
+> An Elastic IP is free **while attached to a running instance**, and billed at
+> roughly $0.005/hour when allocated but unattached. If you tear the instance
+> down later, release the IP too (Actions → Release) or it quietly bills.
 
 ---
 
