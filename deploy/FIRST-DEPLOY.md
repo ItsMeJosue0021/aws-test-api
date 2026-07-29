@@ -117,7 +117,7 @@ The wizard is one long form. Panels, top to bottom:
 
 1. **Name and tags** — `test-api`
 2. **Application and OS Images** — Quick Start → **Ubuntu** tile → the dropdown
-   should read *Ubuntu Server 24.04 LTS (HVM), SSD Volume Type*, marked
+   should read *Ubuntu Server 26.04 LTS (HVM), SSD Volume Type*, marked
    "Free tier eligible"
 3. **Instance type** — `t3.micro`
 4. **Key pair (login)** — click **Create new key pair** → name `test-api-key`,
@@ -134,15 +134,9 @@ That takes a couple of minutes; SSH will refuse connections before it finishes.
 Find your address on the instance's **Details** tab, field
 **Public IPv4 address**.
 
-| Field | Value |
-|---|---|
-| Name | `test-api` |
-| AMI | **Ubuntu Server 24.04 LTS**, 64-bit (x86) |
-| Instance type | `t3.micro` |
-| Key pair | Create new → `test-api-key` → RSA → **.pem** |
-| Storage | 20 GiB, gp3 |
+### Inbound rules
 
-Under **Network settings → Edit**, set the inbound rules:
+In the expanded **Network settings**, you want exactly two:
 
 | Type | Source | Why |
 |---|---|---|
@@ -152,10 +146,16 @@ Under **Network settings → Edit**, set the inbound rules:
 Do **not** open 22 to anywhere. That's the single most common way a learning
 box gets compromised.
 
+> **If SSH times out later, this is almost always why.** Many ISPs (especially
+> mobile and CGNAT connections) send your traffic out through a *pool* of
+> addresses, so the `/32` that "My IP" captured is not the one you connect
+> from next time. If your address is bouncing around a block, set the SSH
+> source to **Custom** and enter the enclosing `/24` — e.g. `160.30.69.0/24`.
+> Wider than ideal, still far narrower than `0.0.0.0/0`, and the Ubuntu AMI
+> disables password auth so a key is still required.
+
 The `.pem` downloads once and AWS never shows it again. Losing it means
 rebuilding the instance.
-
-Then click **Launch instance**.
 
 ### Give it a static IP
 
@@ -216,8 +216,8 @@ Everything from here runs **on the server**.
 sudo apt update && sudo apt upgrade -y
 
 sudo apt install -y nginx git unzip postgresql postgresql-contrib \
-  php8.3-fpm php8.3-cli php8.3-pgsql php8.3-mbstring \
-  php8.3-xml php8.3-curl php8.3-zip php8.3-bcmath php8.3-intl php8.3-gd
+  php8.5-fpm php8.5-cli php8.5-pgsql php8.5-mbstring \
+  php8.5-xml php8.5-curl php8.5-zip php8.5-bcmath php8.5-intl php8.5-gd
 
 curl -sS https://getcomposer.org/installer | php
 sudo mv composer.phar /usr/local/bin/composer
@@ -226,7 +226,7 @@ sudo mv composer.phar /usr/local/bin/composer
 Sanity check — all three should report `active (running)`:
 
 ```bash
-systemctl is-active nginx php8.3-fpm postgresql
+systemctl is-active nginx php8.5-fpm postgresql
 ```
 
 ---
@@ -323,8 +323,8 @@ sudo cp deploy/nginx.conf /etc/nginx/sites-available/test-api
 sudo ln -sf /etc/nginx/sites-available/test-api /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
-sudo cp deploy/php-uploads.ini /etc/php/8.3/fpm/conf.d/99-test-api.ini
-sudo systemctl restart php8.3-fpm
+sudo cp deploy/php-uploads.ini /etc/php/8.5/fpm/conf.d/99-test-api.ini
+sudo systemctl restart php8.5-fpm
 
 sudo nginx -t && sudo systemctl reload nginx
 ```
@@ -396,7 +396,7 @@ Check in this order — it's ordered by likelihood.
 |---|---|---|
 | SSH hangs | Your IP changed | Update the SG inbound rule |
 | Connection refused on :80 | HTTP not open in the SG | Add port 80 from `0.0.0.0/0` |
-| **502** Bad Gateway | PHP-FPM down / wrong socket | `systemctl status php8.3-fpm` |
+| **502** Bad Gateway | PHP-FPM down / wrong socket | `systemctl status php8.5-fpm` |
 | **500** / blank | `storage/` not writable | `tail storage/logs/laravel.log` |
 | `permission denied for schema public` | DB not owned by `testapi` | Recreate with `OWNER testapi` |
 | Config edit ignored | Stale config cache | `php artisan config:cache` |

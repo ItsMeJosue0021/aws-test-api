@@ -8,7 +8,7 @@ These are **templates**. Each has a `<placeholder>` you must replace.
 | File | Installs to | Placeholder to replace |
 |---|---|---|
 | `nginx.conf` | `/etc/nginx/sites-available/test-api` | `<your-domain.com>` |
-| `php-uploads.ini` | `/etc/php/8.3/fpm/conf.d/99-test-api.ini` | none |
+| `php-uploads.ini` | `/etc/php/8.5/fpm/conf.d/99-test-api.ini` | none |
 | `laravel-worker.service` | `/etc/systemd/system/laravel-worker.service` | none |
 | `../deploy.sh` | stays in the repo, run in place | none |
 | `../.env.production.example` | copy to `.env` on the server | several — see the file |
@@ -20,7 +20,7 @@ This file is just the install commands.
 
 ## Prerequisites
 
-The app is already cloned to `/var/www/test-api`, and nginx + PHP 8.3 are
+The app is already cloned to `/var/www/test-api`, and nginx + PHP 8.5 are
 installed (Steps 4-5 of `DEPLOYMENT.md`).
 
 ---
@@ -78,9 +78,9 @@ this.
 
 ```bash
 sudo cp /var/www/test-api/deploy/php-uploads.ini \
-        /etc/php/8.3/fpm/conf.d/99-test-api.ini
+        /etc/php/8.5/fpm/conf.d/99-test-api.ini
 
-sudo systemctl restart php8.3-fpm
+sudo systemctl restart php8.5-fpm
 
 # Confirm the new values took effect
 php -i | grep -E 'upload_max_filesize|post_max_size'

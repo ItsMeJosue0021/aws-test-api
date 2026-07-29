@@ -3,7 +3,7 @@
 A step-by-step guide for deploying this Laravel 13 API to a single EC2 instance
 with an RDS PostgreSQL database.
 
-**Written for this project specifically.** It assumes PHP 8.3, PostgreSQL, and
+**Written for this project specifically.** It assumes PHP 8.5, PostgreSQL, and
 the `database` driver for cache/session/queue — which is what this repo is
 currently configured for.
 
@@ -54,7 +54,7 @@ The shopping list, before you touch a console.
 
 | Resource | Spec | Why |
 |---|---|---|
-| **EC2 instance** | `t3.micro` / `t3.small`, Ubuntu 24.04 LTS | Your web server |
+| **EC2 instance** | `t3.micro` / `t3.small`, Ubuntu 26.04 LTS | Your web server |
 | **Key pair** | `.pem` file | SSH access — AWS shows it once, save it |
 | **Security groups** | `web-sg`, `db-sg` | The firewalls (see below) |
 | **RDS PostgreSQL** | `db.t4g.micro` | This app is configured for `pgsql` |
@@ -190,7 +190,7 @@ avoids a chicken-and-egg problem.
    Make `web-sg` and `db-sg` with the rules from Step 1.
 
 2. **Launch the EC2 instance** (EC2 → Instances → Launch)
-   - AMI: Ubuntu Server 24.04 LTS
+   - AMI: Ubuntu Server 26.04 LTS
    - Type: `t3.micro`
    - Key pair: create/select one and **download the `.pem`**
    - Security group: `web-sg`
@@ -229,10 +229,11 @@ Everything from here runs **on the EC2 instance**.
 ```bash
 sudo apt update && sudo apt upgrade -y
 
-# PHP 8.3 (Ubuntu 24.04's default) + the extensions Laravel and Postgres need
+# PHP 8.5 (Ubuntu 26.04's default) + the extensions Laravel and Postgres need
+# On a different Ubuntu release, check first: apt-cache search --names-only '^php[0-9]+\.[0-9]+-fpm$'
 sudo apt install -y nginx git unzip \
-  php8.3-fpm php8.3-cli php8.3-pgsql php8.3-mbstring \
-  php8.3-xml php8.3-curl php8.3-zip php8.3-bcmath php8.3-intl php8.3-gd
+  php8.5-fpm php8.5-cli php8.5-pgsql php8.5-mbstring \
+  php8.5-xml php8.5-curl php8.5-zip php8.5-bcmath php8.5-intl php8.5-gd
 
 # Composer
 curl -sS https://getcomposer.org/installer | php
@@ -335,7 +336,7 @@ server {
     }
 
     location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_pass unix:/var/run/php/php8.5-fpm.sock;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
     }
@@ -474,7 +475,7 @@ Work down this list — it's ordered by how often each one is the actual cause.
 
 | Symptom | Cause | Check |
 |---|---|---|
-| **502 Bad Gateway** | PHP-FPM down or wrong socket path | `sudo systemctl status php8.3-fpm` |
+| **502 Bad Gateway** | PHP-FPM down or wrong socket path | `sudo systemctl status php8.5-fpm` |
 | **500 / blank page** | `storage/` not writable | `tail -f storage/logs/laravel.log` |
 | **DB connection refused** | `db-sg` doesn't allow `web-sg` | `psql -h <endpoint> -U postgres` |
 | **Config change ignored** | Stale config cache | `php artisan config:cache` |
@@ -541,7 +542,7 @@ php artisan queue:restart
 php artisan optimize:clear
 
 # Service health
-sudo systemctl status nginx php8.3-fpm laravel-worker
+sudo systemctl status nginx php8.5-fpm laravel-worker
 ```
 
 ### Paths
@@ -551,6 +552,6 @@ sudo systemctl status nginx php8.3-fpm laravel-worker
 | Application | `/var/www/test-api` |
 | Web root | `/var/www/test-api/public` |
 | nginx site config | `/etc/nginx/sites-available/test-api` |
-| PHP-FPM socket | `/var/run/php/php8.3-fpm.sock` |
+| PHP-FPM socket | `/var/run/php/php8.5-fpm.sock` |
 | Worker unit | `/etc/systemd/system/laravel-worker.service` |
 | Laravel log | `/var/www/test-api/storage/logs/laravel.log` |
