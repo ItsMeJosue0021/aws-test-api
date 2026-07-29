@@ -316,10 +316,12 @@ php artisan view:cache
 ```bash
 cd /var/www/test-api
 
-# No domain yet, so match any hostname
-sed -i 's/<your-domain.com>/_/' deploy/nginx.conf
+# No domain yet, so `_` matches any hostname. Piping rather than `sed -i`
+# leaves the repo file untouched -- an edited working tree makes the
+# `git pull` in deploy.sh fail with "local changes would be overwritten".
+sed 's/<your-domain.com>/_/' deploy/nginx.conf \
+  | sudo tee /etc/nginx/sites-available/test-api > /dev/null
 
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/test-api
 sudo ln -sf /etc/nginx/sites-available/test-api /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 

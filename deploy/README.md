@@ -47,9 +47,10 @@ php artisan migrate --force
 ```bash
 cd /var/www/test-api
 
-# Set your domain, then install
-sed -i 's/<your-domain.com>/example.com/' deploy/nginx.conf
-sudo cp deploy/nginx.conf /etc/nginx/sites-available/test-api
+# Set your domain and install in one pass. Piping rather than `sed -i` keeps
+# the repo file pristine -- a dirty working tree breaks deploy.sh's `git pull`.
+sed 's/<your-domain.com>/example.com/' deploy/nginx.conf \
+  | sudo tee /etc/nginx/sites-available/test-api > /dev/null
 
 sudo ln -sf /etc/nginx/sites-available/test-api /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
