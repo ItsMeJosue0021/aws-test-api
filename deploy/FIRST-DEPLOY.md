@@ -15,12 +15,59 @@ the fuller production-shaped path — come back to it once this works.
 
 ---
 
-## Phase 0 — Before you touch anything
+## Phase 0 — Account setup
 
-1. **Set a billing alarm.** Console → Billing and Cost Management → Budgets →
-   Create budget → Monthly cost budget → $10 → your email.
-2. **Set your region to Singapore.** Top-right region selector →
-   `Asia Pacific (Singapore) ap-southeast-1`.
+Do this once, in this order. Steps 1-3 must happen as **root**; everything
+after uses the IAM user.
+
+### 1. Sign in as root, then lock it down
+
+Sign in at https://console.aws.amazon.com with your account **email address**
+(the *Root user* tab).
+
+Immediately enable MFA:
+https://us-east-1.console.aws.amazon.com/iam/home#/security_credentials
+→ Multi-factor authentication (MFA) → Assign MFA device → Authenticator app.
+
+Root can do anything and **cannot be restricted** — including closing the
+account. Leaked AWS credentials are routinely used to run up five-figure
+compute bills. An IAM user can be revoked in one click; root cannot.
+
+### 2. Billing: activate IAM access, then set a budget
+
+IAM users **cannot see billing by default**, so do this while still root.
+
+- https://us-east-1.console.aws.amazon.com/billing/home#/account
+  → *IAM user and role access to Billing information* → Edit → **Activate**
+- https://us-east-1.console.aws.amazon.com/costmanagement/home#/budgets
+  → Create budget → Use a template → Monthly cost budget → $10 → your email
+
+### 3. Create an IAM admin user
+
+https://us-east-1.console.aws.amazon.com/iam/home#/users → **Create user**
+
+| Field | Value |
+|---|---|
+| User name | e.g. `joshua-admin` |
+| Console access | tick *Provide user access to the AWS Management Console* |
+| User type | *I want to create an IAM user* |
+| Permissions | *Attach policies directly* → **AdministratorAccess** |
+
+Copy the **console sign-in URL** from the final screen
+(`https://<account-id>.signin.aws.amazon.com/console`).
+
+Optional: IAM dashboard → *Account Alias* → Create → makes that URL readable,
+e.g. `https://joshua-test.signin.aws.amazon.com/console`.
+
+Sign out of root. **Sign back in as the IAM user for everything below.**
+
+> Root and IAM are different *tabs* on the same sign-in page. Root wants an
+> email address; IAM wants an account ID/alias plus user name. Being on the
+> wrong tab is a common source of "my password isn't working".
+
+### 4. Set your region to Singapore
+
+Top-right region selector → `Asia Pacific (Singapore) ap-southeast-1`.
 
 > AWS resources are **region-scoped**. If you create the instance in one region
 > and later look in another, it appears to have vanished. Almost everyone hits
