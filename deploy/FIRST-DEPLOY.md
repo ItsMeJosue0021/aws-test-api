@@ -501,6 +501,31 @@ re-copy them and reload the relevant service manually.
 
 ---
 
+## Stopping and starting the instance
+
+The main cost lever. Stop it when you finish for the day.
+
+**Console → Instances → tick `test-api` → Instance state → Stop instance.**
+
+What survives: the EBS volume (code, database, uploaded images) and the Elastic
+IP association, so you get the same address back. Billing drops to ~$5.50/month
+— storage plus the IP. Compute, the expensive part, stops immediately.
+
+Start it again from the same dropdown. Nothing needs reconfiguring: nginx,
+PHP-FPM, PostgreSQL and the queue worker were all `systemctl enable`d, so they
+come back automatically at boot. Wait for `2/2 passed` and the API is live.
+
+> **Stop is not Terminate.** They sit two items apart in the same menu.
+> Terminate deletes the root volume by default — your database, `.env` and
+> uploads are unrecoverable, and you would redo all eight phases. There is no
+> undo. Read the confirmation dialog.
+
+If SSH times out after a restart, your ISP likely reassigned your address while
+the instance was off. Same fix as Phase 1: compare `curl.exe
+https://api.ipify.org` against the security group rule.
+
+---
+
 ## When something breaks
 
 Ordered by how often each is the actual cause.
