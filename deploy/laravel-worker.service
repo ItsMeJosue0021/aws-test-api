@@ -1,0 +1,36 @@
+# systemd unit for the Laravel queue worker.
+#
+# Install to: /etc/systemd/system/laravel-worker.service
+# See deploy/README.md for the exact commands.
+#
+# QUEUE_CONNECTION=database means jobs sit in the `jobs` table until a worker
+# picks them up. Without this service, queued jobs never run at all.
+
+[Unit]
+Description=Laravel queue worker for test-api
+After=network.target
+
+[Service]
+# Must match the group that owns storage/ so the worker can write logs.
+User=www-data
+Group=www-data
+
+Restart=always
+RestartSec=5
+
+# --max-time=3600 recycles the process hourly, capping any slow memory leak.
+# --tries=3 retries a failing job three times before marking it failed.
+ExecStart=/usr/bin/php /var/www/test-api/artisan queue:work \
+    --sleep=3 \
+    --tries=3 \
+    --max-time=3600
+
+# Give in-flight jobs time to finish on stop/restart instead of killing them.
+ExecStop=/bin/kill -TERM $MAINPID
+TimeoutStopSec=90
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
