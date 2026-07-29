@@ -170,9 +170,14 @@ Left sidebar → **Network & Security → Elastic IPs**
 The instance's Public IPv4 address now changes to this one — use it from here
 on. Without this step the IP changes every time the instance stops.
 
-> An Elastic IP is free **while attached to a running instance**, and billed at
-> roughly $0.005/hour when allocated but unattached. If you tear the instance
-> down later, release the IP too (Actions → Release) or it quietly bills.
+> Since February 2024 AWS charges for **every** public IPv4 address — roughly
+> $0.005/hour (~$3.65/month), whether it's attached or idle. The 12-month free
+> tier covers 750 hours/month of it, so one address on one instance is normally
+> $0 while you're still free-tier eligible.
+>
+> Stopping the instance does **not** stop the IP charge. When you're finished
+> with this project, release the address (Elastic IPs → Actions → Release) or
+> it bills quietly forever.
 
 ---
 
@@ -403,6 +408,37 @@ tail -f /var/www/test-api/storage/logs/laravel.log
 sudo tail -f /var/log/nginx/test-api.error.log
 sudo journalctl -u laravel-worker -f
 ```
+
+---
+
+## What this costs
+
+Approximate, `ap-southeast-1`, running 24/7. **Verify against
+https://calculator.aws and your own Billing dashboard** — AWS changes pricing
+and free-tier structure regularly.
+
+| Item | ~Monthly |
+|---|---|
+| `t3.micro` (744 hrs) | $9.60 |
+| 20 GB gp3 storage | $1.90 |
+| Public IPv4 address | $3.65 |
+| Data transfer out | $0 (first 100 GB free) |
+| **Total** | **≈ $15** |
+
+Free-tier eligible accounts get 750 hrs/month of `t3.micro`, 30 GB EBS, and
+750 hrs/month of public IPv4 for the first 12 months — enough to run this
+continuously at no cost.
+
+Levers, biggest first:
+
+- **Stop the instance when not working on it.** Compute billing stops at once;
+  you keep paying only storage + IP (~$5.50/month). Restart takes ~30 seconds.
+- **Release the Elastic IP** when the project is done, or it bills forever.
+- **Terminate the instance** to drop to $0. Check the EBS volume is deleted
+  too — detached volumes keep billing.
+
+Running Postgres on this instance instead of RDS is what keeps the figure
+near $15; RDS would roughly double it and can't be stopped as easily.
 
 ---
 
